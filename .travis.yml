@@ -23,7 +23,7 @@ script:
   - go vet $(go list ./... | grep -v /vendor/)
   - go test -v -race ./...
   # Only build binaries from the latest Go release.
-  - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="amd64" -output="simple-serial-temperature-exporter.." -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose ./...; fi
+  - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="amd64" -output="simple-serial-temperature-exporter_{{.OS}}_{{.Arch}}" -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose ./...; fi
   - ls -la
 
 deploy:
@@ -34,9 +34,9 @@ deploy:
     secure: "lKFlEJVcl1QbvXnWgHtbKLpZjY7/jW23CBuqv5H0Ey6V0BLSWw88SqALerZzYXEd3I2BwRKDLxxeiF+XyyMDHn27StBol5qpk5iF36RRUgloLwGRP4Qdaa2QYYLcQdOhWxVBKcKv51JvMXt2m3avAMUIuQi66k8bPUymt9HyvmzEPPmTucjdbaKXF2xy1j6qH8/bmNjoQMfiIQfBGYBZdw5xklGi3IsMvW90FYSSfqDHuZxovDCS9UYLHfTOgl6P9bMI/Cogc2u6b1UIvhJ8L98/gapbASrdUIK2cx6F4r2ZIFxKu7ZfiUiYUPJ/RGpJAz73uX3AhQyBTH/AzkBGpW01BPxXM/R0YRW5/FRE7qKCnB+QyzhCyKNQ7mQc0uRw7Qh+eZwJFedEVF79P1adKp941YKnxihomKevo9Blpz9ik3v6QFgJMU9IXWfHiaHNlR5vNVhzrUQ70w30g/ylRfP8+glbMoJuweb8Mt1yAvbDnQvPXiNnmWlvzcjj+fDu5D5DnV/iY0eWe9Jgz/81f4sAJJtjSswYbWoq9xp6BSmSg7cc3ZKBdwO5qZ10bsnXrfmNq2PFK8LXQ8M9Tzv+mnntt3GczxIArWZYVLXRrwDgHnGEYyaninybvartDHlliGpSokAn3aRPwvthxi0k9nJblOwVUgQs4ULWmVbxWvE="
   file:
   # The names of the binaries to output, based on the -output template passed to gox.
-  - simple-serial-temperature-exporter.windows.amd64.exe
-  - simple-serial-temperature-exporter.darwin.amd64
-  - simple-serial-temperature-exporter.linux.amd64
+  - simple-serial-temperature-exporter_windows_amd64.exe
+  - simple-serial-temperature-exporter_darwin_amd64
+  - simple-serial-temperature-exporter_linux_amd64
   on:
     repo: michz/simple-serial-temperature-exporter
     # Only build binaries for tagged commits
