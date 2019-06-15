@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,14 +14,13 @@ import (
 	"github.com/jacobsa/go-serial/serial"
 )
 
-// @TODO Variablennamen konfigurierbar via CLI
-// @TODO HTTP Port konfigurierbar via CLI
-
 var currentTemperature float64 = 9999.9
+var outputMetricName string = "temperature"
+var staticLabels string = ""
 
 func httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 	if currentTemperature < 9999 {
-		fmt.Fprintf(w, "temperature{} %f", currentTemperature)
+		fmt.Fprintf(w, "%s{%s} %f", outputMetricName, staticLabels, currentTemperature)
 	}
 }
 
@@ -29,12 +29,22 @@ func httpHealthzRequestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	// Command line parameters
+	httpPort := flag.Int("httpPort", 27164, "Port to listen on for HTTP requests")
+	serialPort := flag.String("serialPort", "/dev/ttyUSB0", "Serial port to get temperature from")
+	metricName := flag.String("metricName", "temperature", "Name for the Prometheus metric")
+	labels := flag.String("labels", "", "Static labels that should be appended to the prometheus metric")
+
+	flag.Parse()
+	outputMetricName = *metricName
+	staticLabels = *labels
+
 	// Start webserver concurrently
-	go mainHttp()
+	go mainHttp(*httpPort)
 
 	// Set up options.
 	options := serial.OpenOptions{
-		PortName:        "/dev/ttyUSB0",
+		PortName:        *serialPort,
 		BaudRate:        9600,
 		DataBits:        8,
 		StopBits:        1,
@@ -45,7 +55,7 @@ func main() {
 
 	if err != nil {
 		fmt.Printf("Could not open serial port: %s\n", err)
-		os.Exit(1)
+		os.Exit(3)
 	}
 
 	defer f.Close()
@@ -56,7 +66,7 @@ func main() {
 		n, err := f.Read(rxBuf)
 		if err != nil {
 			fmt.Printf("Could not read from serial port: %s\n", err)
-			os.Exit(2)
+			os.Exit(4)
 		}
 
 		if n > 0 {
@@ -86,8 +96,8 @@ func main() {
 	}
 }
 
-func mainHttp() {
+func mainHttp(httpPort int) {
 	http.HandleFunc("/export", httpRequestHandler)
 	http.HandleFunc("/healthz", httpHealthzRequestHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":"+strconv.FormatInt(int64(httpPort), 10), nil))
 }
